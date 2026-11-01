@@ -6,8 +6,9 @@ and results/chameleon-p50 next to this script's repository root)
 
 Rows: the rule at p = 1/4, K = 1, the Morris and exact estimators and the
 classic skip list (one implementation), the splay-list and the CBTree.
-Columns, per distribution: mean search path (nodes visited per search as
-each implementation counts it, at 64 threads) and the median throughput over
+Columns, per distribution: mean search path at 64 threads (levels visited
+plus forward steps; only for the four skip lists of one implementation,
+since the splay-list and the CBTree count different units) and the median throughput over
 the ten runs, in millions of operations per second, at 64 and 256 threads.
 Read-only workload, 10^6 keys.
 """
@@ -43,7 +44,10 @@ def main(argv):
     for s, p, K, label in ROWS:
         cells = []
         for d in DISTS:
-            pl = path.get((s, p, K, d, 64))
+            # The path is reported for the four skip lists that share one
+            # implementation (levels visited plus forward steps). The
+            # splay-list and the CBTree count their own, different, units.
+            pl = path.get((s, p, K, d, 64)) if s.startswith("bsl_") else None
             cells.append("%.1f" % statistics.mean(pl) if pl else "--")
             for t in THREADS:
                 v = thr.get((s, p, K, d, t))
