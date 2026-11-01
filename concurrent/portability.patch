@@ -1,0 +1,85 @@
+Portability patch for the vendored SetBench fork (third_party/splaylist).
+
+The fork is NOT x86-only. Three portability changes and one build fix, none
+touching algorithm code, verified by building all 26 microbench binaries of
+the fork's 13 structures on Linux/aarch64 (Ubuntu 22.04, g++ 11.4). (An
+earlier note said 40: that count included 14 prebuilt x86-64 ubench_*
+binaries the fork ships in microbench/bin; build.sh now drops them.)
+
+  1. -mcx16 enables cmpxchg16b for upstream SetBench's KCAS/DCSS descriptors.
+     Nothing reachable in this fork uses 128-bit CAS -- grepping __int128,
+     cmpxchg16b, CAS128, uint128 across ds/, microbench/ and common/ (excluding
+     the unreferenced vendored libatomic_ops) returns nothing.
+  2. -mrtm enables Intel TSX. Its only consumer is common/rtm.h, reached solely
+     via common/rq/rq_htm_rwlock.h behind #if defined RQ_HTM_RWLOCK, which is
+     never defined; the build falls through to RQ_UNSAFE. Dead code.
+  3. The x86 `pause` in the per-node spinlock IS reachable -- locks_impl.h is
+     included by every skip list and flex list, and acquireLock is on the
+     insert/erase path. Replaced by an architecture dispatch, not an
+     unconditional `yield`, so this patch is a no-op on x86 and one tree builds
+     on both architectures.
+
+Both Makefile changes probe $(CXX) -dumpmachine, so no flag is lost on x86.
+
+  4. Not a portability change: microbench/keygen.h line 97 asserts against
+     `maxKey`, which is not in scope in KeyGeneratorZipf (it is
+     `data->maxKey`). The line is compiled only when NDEBUG is off, so the
+     fork's `use_asserts=1` build has never compiled. Fixed so that the
+     assertion-enabled builds of our structures (setbench/build.sh) can be
+     made; binaries built the fork's way (-DNDEBUG) are unchanged.
+
+Apply to a COPY, never to the vendored tree -- setbench/build.sh does this.
+
+--- a/structs_bench/microbench/Makefile
++++ b/structs_bench/microbench/Makefile
+@@ -29,7 +29,7 @@
+ FLAGS += -DMAX_THREADS_POW2=256
+ FLAGS += -DCPU_FREQ_GHZ=2.1 #$(shell ./experiments/get_cpu_ghz.sh)
+ FLAGS += -DMEMORY_STATS=if\(1\) -DMEMORY_STATS2=if\(0\)
+-FLAGS += -std=c++14 -mcx16 -O2 -gdwarf
++FLAGS += -std=c++14 -O2 -gdwarf $(shell $(CXX) -dumpmachine | grep -q x86_64 && echo -mcx16)
+ FLAGS += -fno-omit-frame-pointer
+ FLAGS += -fopenmp
+ #FLAGS += -DNO_CLEANUP_AFTER_WORKLOAD ### avoid executing data structure destructors, to save teardown time at the end of each trial (useful with massive trees)
+@@ -46,7 +46,7 @@
+ LDFLAGS += -I./ -I../ `find ../common -type d | sed s/^/-I/`
+ LDFLAGS += -lpthread
+ LDFLAGS += -ldl
+-LDFLAGS += -mrtm
++LDFLAGS += $(shell $(CXX) -dumpmachine | grep -q x86_64 && echo -mrtm)
+ 
+ bin_dir=bin
+ dir_guard:
+--- a/structs_bench/common/locks_impl.h
++++ b/structs_bench/common/locks_impl.h
+@@ -8,10 +8,18 @@
+ #ifndef LOCKS_IMPL_H
+ #define LOCKS_IMPL_H
+ 
++#if defined(__x86_64__) || defined(__i386__)
++#  define BSL_SPIN_HINT() __builtin_ia32_pause()
++#elif defined(__aarch64__) || defined(__arm__)
++#  define BSL_SPIN_HINT() __asm__ __volatile__("yield" ::: "memory")
++#else
++#  define BSL_SPIN_HINT() ((void) 0)
++#endif
++
+ static void acquireLock(volatile int *lock) {
+     while (1) {
+         if (*lock) {
+-            __asm__ __volatile__("pause;");
++            BSL_SPIN_HINT();
+             continue;
+         }
+         if (__sync_bool_compare_and_swap(lock, false, true)) {
+--- a/structs_bench/microbench/keygen.h
++++ b/structs_bench/microbench/keygen.h
+@@ -94,7 +94,7 @@
+         } while (low <= high);
+ 
+         // Assert that zipf_value is between 1 and N
+-        assert((zipf_value >= 1) && (zipf_value <= maxKey));
++        assert((zipf_value >= 1) && (zipf_value <= data->maxKey));
+ 
+         return (zipf_value);
+     }

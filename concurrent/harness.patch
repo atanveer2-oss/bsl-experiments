@@ -1,0 +1,150 @@
+Harness patch for the SetBench microbenchmarks, applied by chameleon/provision.sh
+to the build COPY after setbench/build.sh has applied portability.patch. Never
+applied to the vendored tree. No change touches algorithm code.
+
+  1. Threads above 99. benchmark.cpp and benchmark_write.cpp size their
+     per-thread arrays by STRESS_MAX_THREADS = 100 and number workers from 1,
+     and both CBTree variants keep per-thread counters in arrays of 100, so
+     any run with 100 or more threads writes out of bounds. Raised to 256
+     (with MAX_THREADS_POW2 = 512 so the adapter's rngs array covers tid 256),
+     which admits every thread count up to the 256 hardware threads of a dual
+     EPYC 7763 with SMT on.
+  2. A `seed N` argument. The fork seeds thread i's xorshift with i + 1, a
+     constant, so ten repetitions replay one key set and one access sequence.
+     `seed N` offsets every stream by N * 1000003; `seed 0`, or no `seed`
+     argument, reproduces the original streams exactly.
+  3. Zipf in the update benchmark. benchmark_write.cpp inserts about half of
+     the prefill candidates and keeps only those in `important`, but sizes the
+     Zipf generator to `prefill`, so ranks above important.size() index past
+     the vector. The generator is now built after prefill, sized to the keys
+     present. Uniform and hot-set workloads are unaffected.
+
+The printed output format is unchanged, so the authors' parsers still work.
+
+--- a/structs_bench/ds/cbtree-concurrent/cbtree_impl.h
++++ b/structs_bench/ds/cbtree-concurrent/cbtree_impl.h
+@@ -124,8 +124,8 @@
+         cout << " -------- " << endl;
+     }
+     private:
+-    MyCounter length[100];
+-    MyCounter nops[100];
++    MyCounter length[MAX_THREADS_POW2]; // bsl harness patch: was 100
++    MyCounter nops[MAX_THREADS_POW2];
+     int cops;
+     std::shared_timed_mutex mutex_;
+     //pthread_rwlock_t lock;
+--- a/structs_bench/ds/cbtree-concurrent-fair/cbtree_impl.h
++++ b/structs_bench/ds/cbtree-concurrent-fair/cbtree_impl.h
+@@ -126,8 +126,8 @@
+         cout << " -------- " << endl;
+     }
+     private:
+-    MyCounter length[100];
+-    MyCounter nops[100];
++    MyCounter length[MAX_THREADS_POW2]; // bsl harness patch: was 100
++    MyCounter nops[MAX_THREADS_POW2];
+     int cops;
+     std::shared_timed_mutex mutex_;
+     //pthread_rwlock_t lock;
+--- a/structs_bench/microbench/Makefile
++++ b/structs_bench/microbench/Makefile
+@@ -26,7 +26,7 @@
+     FLAGS += -DNDEBUG
+ endif
+ 
+-FLAGS += -DMAX_THREADS_POW2=256
++FLAGS += -DMAX_THREADS_POW2=512
+ FLAGS += -DCPU_FREQ_GHZ=2.1 #$(shell ./experiments/get_cpu_ghz.sh)
+ FLAGS += -DMEMORY_STATS=if\(1\) -DMEMORY_STATS2=if\(0\)
+ FLAGS += -std=c++14 -O2 -gdwarf $(shell $(CXX) -dumpmachine | grep -q x86_64 && echo -mcx16)
+--- a/structs_bench/microbench/benchmark.cpp
++++ b/structs_bench/microbench/benchmark.cpp
+@@ -15,7 +15,7 @@
+ #define DS_ADAPTER_T ds_adapter<KEY_TYPE, VALUE_TYPE, RECLAIM<>, ALLOC<>, POOL<> >
+ 
+ const int MAX_KEY = 2000000000;
+-const int STRESS_MAX_THREADS = 100;
++const int STRESS_MAX_THREADS = 256; // bsl harness patch: was 100
+ typedef long long ll;
+ 
+ #define VALUE_TYPE void *
+@@ -162,6 +162,7 @@
+ }
+ 
+ bool ideal = false;
++unsigned int seed_offset = 0; // bsl harness patch: `seed N`, 0 keeps the original streams
+ 
+ int main(int argc, char **argv) {
+     for (int i = 0; i <= STRESS_MAX_THREADS; i++) {
+@@ -193,6 +194,8 @@
+             cops = atoi(argv[i + 1]);
+         } else if (string(argv[i]) == "ideal") {
+             ideal = true;
++        } else if (string(argv[i]) == "seed") {
++            seed_offset = (unsigned int) strtoul(argv[i + 1], NULL, 10);
+         } else if (string(argv[i]) == "zipf") {
+             zipf = true;
+             alpha = atof(argv[i + 1]);
+@@ -200,6 +203,10 @@
+             std::cout << "Wrong arguments";
+             exit(0);
+         }
++    }
++
++    for (int i = 0; i <= STRESS_MAX_THREADS; i++) {
++        rnd[i].setSeed(i + 1 + seed_offset * 1000003u);
+     }
+ 
+     myKeyGeneratorZipf = new MyKeyGeneratorZipf(prefill, alpha);
+--- a/structs_bench/microbench/benchmark_write.cpp
++++ b/structs_bench/microbench/benchmark_write.cpp
+@@ -15,7 +15,7 @@
+ #define DS_ADAPTER_T ds_adapter<KEY_TYPE, VALUE_TYPE, RECLAIM<>, ALLOC<>, POOL<> >
+ 
+ const int MAX_KEY = 20000000;
+-const int STRESS_MAX_THREADS = 100;
++const int STRESS_MAX_THREADS = 256; // bsl harness patch: was 100
+ const int MAX = 100000000;
+ typedef long long ll;
+ 
+@@ -180,6 +180,7 @@
+ }
+ 
+ bool ideal = false;
++unsigned int seed_offset = 0; // bsl harness patch: `seed N`, 0 keeps the original streams
+ 
+ int main(int argc, char **argv) {
+     for (int i = 0; i <= STRESS_MAX_THREADS; i++) {
+@@ -212,6 +213,8 @@
+             cops = atoi(argv[i + 1]);
+         } else if (string(argv[i]) == "ideal") {
+             ideal = true;
++        } else if (string(argv[i]) == "seed") {
++            seed_offset = (unsigned int) strtoul(argv[i + 1], NULL, 10);
+         } else if (string(argv[i]) == "zipf") {
+             zipf = true;
+             alpha = atof(argv[i + 1]);
+@@ -225,7 +228,9 @@
+         }
+     }
+ 
+-    myKeyGeneratorZipf = new MyKeyGeneratorZipf(prefill, alpha);
++    for (int i = 0; i <= STRESS_MAX_THREADS; i++) {
++        rnd[i].setSeed(i + 1 + seed_offset * 1000003u);
++    }
+ 
+     database->setCops(0, cops);
+ 
+@@ -262,6 +267,11 @@
+             database->insertIfAbsent(0, key, KEY_TO_VALUE(key));
+         }
+     }
++
++    // bsl harness patch: Zipf ranks index `important`, which holds only the
++    // keys inserted at prefill (about half), so the generator is sized to it.
++    // Sized to `prefill`, ranks past important.size() read out of bounds.
++    myKeyGeneratorZipf = new MyKeyGeneratorZipf(zipf ? int(important.size()) : prefill, alpha);
+ 
+     vector<thread> a(num_threads);
+ 
