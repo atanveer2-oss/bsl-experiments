@@ -7,8 +7,9 @@ and results/chameleon-p50 next to this script's repository root)
 Rows: the rule at p = 1/4, K = 1, the Morris and exact estimators and the
 classic skip list (one implementation), the splay-list and the CBTree.
 Columns, per distribution: mean search path at 64 threads (levels visited
-plus forward steps; only for the four skip lists of one implementation,
-since the splay-list and the CBTree count different units) and the median throughput over
+plus forward steps for the four skip lists of one implementation; the
+CBTree's count (*) is tree nodes and the splay-list's (dagger) descends
+from a fixed top level, so neither is comparable) and the median throughput over
 the ten runs, in millions of operations per second, at 64 and 256 threads.
 Read-only workload, 10^6 keys.
 """
@@ -47,8 +48,9 @@ def main(argv):
             # The path is reported for the four skip lists that share one
             # implementation (levels visited plus forward steps). The
             # splay-list and the CBTree count their own, different, units.
-            pl = path.get((s, p, K, d, 64)) if s.startswith("bsl_") else None
-            cells.append("%.1f" % statistics.mean(pl) if pl else "--")
+            pl = path.get((s, p, K, d, 64))
+            mark = "" if s.startswith("bsl_") else ("^{*}" if "cbtree" in s else "^{\\dagger}")
+            cells.append(("%.1f" % statistics.mean(pl)) + mark if pl else "--")
             for t in THREADS:
                 v = thr.get((s, p, K, d, t))
                 cells.append("%.0f" % statistics.median(v) if v else "--")
