@@ -131,12 +131,12 @@ echo "== figures"
 python3 scripts/plot_structural.py rerun                       # cost, KL, depth, space, gap PDFs
 python3 scripts/plot_structural.py rerun --tables > rerun/structural_tables.md
 if [ "$TAILS" != 1 ]; then cp results/structural_*_R200.csv rerun/ 2>/dev/null || true; fi  # committed tails
-python3 scripts/plot_structural_box.py rerun --out rerun/structural_box.pdf
+python3 scripts/plot_structural_box.py rerun --dists zipf1.5,uniform --textwidth 4.2 --out rerun/structural_box.pdf
 if [ -f rerun/reseed_barrier_R2000.csv ]; then
   # the paper's barrier figure: the two arms side by side (the harness also
   # has a clocked-ceiling arm, not in the paper)
   python3 scripts/plot_reseed.py rerun --only=reseed_barrier_tail.pdf \
-    --arms=persistent,reseeded --layout=row --out=rerun/reseed_barrier_tail.pdf
+    --arms=persistent,reseeded --layout=row --ns=1000 --out=rerun/reseed_barrier_tail.pdf
 fi
 
 echo

@@ -70,6 +70,8 @@ def main(argv=None):
     ap.add_argument("--dists", default="uniform,99-1,zipf1")
     ap.add_argument("--max-threads", type=int, default=128)
     ap.add_argument("--set", choices=["writes", "p"], default="writes")
+    ap.add_argument("--textwidth", type=float, default=TEXTWIDTH,
+                    help="figure width in inches (the paper's text width)")
     args = ap.parse_args(argv)
     dists = args.dists.split(",")
     series = SERIES_WRITES if args.set == "writes" else SERIES_P
@@ -84,7 +86,7 @@ def main(argv=None):
         return 1
 
     plt = setup_matplotlib()
-    fig, axes = plt.subplots(1, len(dists), figsize=(TEXTWIDTH, 1.75), sharey=False)
+    fig, axes = plt.subplots(1, len(dists), figsize=(args.textwidth, 1.75), sharey=False)
     axes = list(axes) if len(dists) > 1 else [axes]
     threads_all = sorted({int(r["threads"]) for r in rows})
     for ax, dist in zip(axes, dists):

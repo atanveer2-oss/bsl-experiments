@@ -71,7 +71,8 @@ the plotting scripts pool them:
 
 ```
 python3 protocol/plot_throughput.py results --out results
-python3 protocol/plot_submission.py results results-p50 --out throughput_gated_classic.pdf
+python3 protocol/plot_submission.py results results-p50 --dists zipf1,uniform --textwidth 4.2 --out results/throughput_gated_classic.pdf
+# the paper's two panels; without --dists the uniform, 99/1 and Zipf 1 panels are drawn
 ```
 
 ## What the stress tests check

@@ -165,12 +165,19 @@ def plot_barrier(plt, results):
     # --arms=persistent,reseeded leaves the ceiling arm out (the submission
     # does not define it); --layout=row puts the two n side by side.
     arms = OPTS.get("arms", "persistent,reseeded,ceiling").split(",")
+    # --ns=1000 draws one panel (the submission shows n = 1000 only and
+    # states in the text that n = 100 gives the same curve).
+    ns = [int(v) for v in OPTS.get("ns", "100,1000").split(",")]
     if OPTS.get("layout") == "row":
-        fig, axes = plt.subplots(1, 2, figsize=(5.5, 1.9), sharey=True)
+        fig, axes = plt.subplots(1, len(ns), figsize=(2.75 * len(ns), 1.9),
+                                 sharey=True, squeeze=False)
+        axes = list(axes[0])
     else:
-        fig, axes = plt.subplots(2, 1, figsize=(WIDTH, 3.6), sharex=True)
+        fig, axes = plt.subplots(len(ns), 1, figsize=(WIDTH, 1.8 * len(ns)),
+                                 sharex=True, squeeze=False)
+        axes = list(axes[:, 0])
     tmax = 0.0
-    for ax, n in zip(axes, (100, 1000)):
+    for ax, n in zip(axes, ns):
         floor = 1.0
         for key in arms:
             if key not in data[n]:
@@ -205,8 +212,8 @@ def plot_barrier(plt, results):
     # the script prints them.
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=3,
-               bbox_to_anchor=(0.55, 0.985), handlelength=2.2,
-               columnspacing=1.2)
+               bbox_to_anchor=(0.55 if len(axes) > 1 else 0.6, 0.985),
+               handlelength=2.2, columnspacing=1.2)
     return fig
 
 
