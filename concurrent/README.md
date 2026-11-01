@@ -22,7 +22,7 @@ produced.
 | `protocol/PROTOCOL.md` | the measurement protocol and the reasons for each choice |
 | `protocol/run_protocol.py` | the resumable runner that produced every CSV row |
 | `protocol/node_build.sh` | the node-side build (packages, `build.sh`, `harness.patch`, build record, smoke test) |
-| `protocol/plot_throughput.py`, `protocol/plot_submission.py` | the figures; `protocol/results_json.py` summarises the rows as JSON |
+| `protocol/plot_throughput.py`, `protocol/plot_submission.py` | the figures; `protocol/throughput_table.py` prints the paper's throughput table (search path, throughput at 64 and 256 threads); `protocol/results_json.py` summarises the rows as JSON |
 | `results/node-1` to `node-4` | `throughput_tacc_2026-10-26.csv` and `coldstart_tacc_2026-10-28.csv`, one shard per node |
 | `results-p50/node-1` to `node-4` | `throughput_tacc_2026-10-29.csv`, the rerun at p = 1/2, K = 3 |
 | `results/*.pdf` | throughput, path length and cold-start figures drawn from the rows |

@@ -200,6 +200,12 @@ def plot_barrier(plt, results):
         recessive_grid(ax)
         ax.text(0.98, 0.95, f"$n={n}$", transform=ax.transAxes,
                 ha="right", va="top")
+        # --guides=0.05,0.001 draws dotted confidence levels ("1 in 20",
+        # "1 in 1000") so the crossing of the two arms can be read off.
+        for g in [float(v) for v in OPTS.get("guides", "").split(",") if v]:
+            ax.axhline(g, color="#777777", ls=":", lw=0.7, zorder=0)
+            ax.text(0.02, g * 1.25, f"1 in {round(1 / g):d}", transform=ax.get_yaxis_transform(),
+                    fontsize=6, color="#555555", va="bottom", ha="left")
     for ax in (axes if OPTS.get("layout") == "row" else axes[-1:]):
         ax.set_xlabel("$u$" if OPTS.get("layout") == "row" else "$t$")
         ax.set_xlim(0, math.ceil(tmax) + 0.5)

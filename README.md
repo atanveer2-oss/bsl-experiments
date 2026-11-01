@@ -29,6 +29,7 @@ gives the commit to clone.
 | Box figure, per-search and per-run ratios | `structural/results/structural_box.pdf`, from `structural_hist_*.csv` and `structural_*.csv` | `python3 scripts/plot_structural_box.py results --dists zipf1.5,uniform --textwidth 4.2` |
 | Barrier figure | `structural/results/reseed_barrier_tail.pdf`, from `reseed_barrier_R2000.csv` | `python3 scripts/plot_reseed.py results --only=reseed_barrier_tail.pdf --arms=persistent,reseeded --layout=row --ns=1000` |
 | Throughput figure | `concurrent/results/node-*/throughput_tacc_2026-10-26.csv` and `concurrent/results-p50/node-*/throughput_tacc_2026-10-29.csv` | `python3 protocol/plot_submission.py results results-p50 --dists 99-1,zipf1 --textwidth 4.2 --linear-y --max-threads 256 --out results/throughput_gated_classic.pdf` |
+| Throughput table (search path, throughput at 64 and 256 threads) | the same CSVs | `python3 protocol/throughput_table.py results results-p50` |
 | Throughput, path length and cold-start panels | `concurrent/results/*.pdf`, from the same CSVs and `coldstart_tacc_2026-10-28.csv` | `python3 protocol/plot_throughput.py results --out results` |
 
 Each part's `README.md` says what the arms, workloads and columns are;
