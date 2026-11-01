@@ -71,8 +71,8 @@ the plotting scripts pool them:
 
 ```
 python3 protocol/plot_throughput.py results --out results
-python3 protocol/plot_submission.py results results-p50 --dists zipf1,uniform --textwidth 4.2 --out results/throughput_gated_classic.pdf
-# the paper's two panels; without --dists the uniform, 99/1 and Zipf 1 panels are drawn
+python3 protocol/plot_submission.py results results-p50 --dists 99-1,zipf1 --textwidth 4.2 --linear-y --max-threads 256 --out results/throughput_gated_classic.pdf
+# the paper's two panels, linear throughput axis, up to 256 hardware threads; without --dists, --linear-y and --max-threads the three distributions are drawn log-log up to 128 threads
 ```
 
 ## What the stress tests check

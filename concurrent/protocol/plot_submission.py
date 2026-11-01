@@ -69,6 +69,8 @@ def main(argv=None):
                                                   "throughput_gated_classic.pdf"))
     ap.add_argument("--dists", default="uniform,99-1,zipf1")
     ap.add_argument("--max-threads", type=int, default=128)
+    ap.add_argument("--linear-y", action="store_true",
+                    help="linear throughput axis (the default is logarithmic)")
     ap.add_argument("--set", choices=["writes", "p"], default="writes")
     ap.add_argument("--textwidth", type=float, default=TEXTWIDTH,
                     help="figure width in inches (the paper's text width)")
@@ -114,7 +116,10 @@ def main(argv=None):
         ax.set_xscale("log", base=2)
         ax.set_xticks([1, 8, 32, 128])
         ax.set_xticklabels(["1", "8", "32", "128"])
-        ax.set_yscale("log", base=10)
+        if not args.linear_y:
+            ax.set_yscale("log", base=10)
+        else:
+            ax.set_ylim(bottom=0)
         ax.set_xlabel("threads")
         ax.set_title(dist_label(dist), fontsize=8, loc="left", pad=2)
         recessive_grid(ax)
