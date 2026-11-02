@@ -7,21 +7,20 @@ and three skip lists — behind one adapter interface.
 
 ## It is not x86-only
 
-The note formerly in `CLAUDE.md` said Linux/x86. That is wrong: with
-`portability.patch` the whole tree builds and runs on **Linux/aarch64**, which
-is what makes local development on Apple silicon possible. The patch is a no-op
-on x86, so the same tree serves both.
+With `portability.patch` the whole tree builds and runs on **Linux/aarch64**
+as well as x86-64, which is what makes local development on Apple silicon
+possible. The patch is a no-op on x86, so the same tree serves both.
 
 ```bash
-docker build -t bsl-setbench experiments/setbench
-docker run --rm -v "$PWD/experiments:/work" bsl-setbench /work/setbench/build.sh
+docker build -t bsl-setbench concurrent
+docker run --rm -v "$PWD:/work" bsl-setbench /work/concurrent/build.sh
 ```
 
 Zero errors: 26 binaries for the fork's 13 structures (an earlier count of 40
 included 14 prebuilt x86 binaries the fork ships; `build.sh` now drops them),
 plus a bench and a write binary for each of ours in `ds/` (`bsl_gated`, the
 paper's rule; `bsl_classic`, the control; `bsl_exact`, `bsl_morris`).
-Binaries land in `setbench/.work/` and survive between runs. Validation and
+Binaries land in `concurrent/.work/` and survive between runs. Validation and
 the local smoke run: `RESULTS-local.md`. Locally this runs under Colima (aarch64, HVF-
 accelerated, so near-native per-core) — adequate for correctness and for
 single-threaded numbers, **not** for scalability claims (see below).

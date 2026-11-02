@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Resumable runner for the SetBench throughput protocol (experiments/setbench/README.md).
+"""Resumable runner for the SetBench throughput protocol (PROTOCOL.md).
 
-Runs on the Chameleon node, after provision.sh has built the binaries. Every
+Runs on the measurement node, after node_build.sh has built the binaries. Every
 completed run appends one row to a CSV, so a lost SSH session costs at most
 the run that was in flight: start the same command again and it skips every
 row already present.

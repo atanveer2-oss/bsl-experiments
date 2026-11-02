@@ -1,6 +1,6 @@
 # Structural experiments
 
-The in-process harness behind the paper's Table 1 and the structural
+The in-process harness behind the paper's cost table and structural
 figures: a skip list templated on a promotion policy
 (`include/bsl/skiplist.hpp`), so every arm shares the search and splice
 code and differs only in when a height changes. Nothing here measures time;
@@ -11,8 +11,8 @@ exact and seeded.
 
 | In the paper | File | Drawn from | Command |
 |---|---|---|---|
-| Table 1 (cost over the entropy benchmark and bits per item at n = 10^5) | printed as Markdown | `results/structural_<dist>_n100k.csv` (and `_n10k.csv`, plain `_<dist>.csv` for n = 10^4, 10^3) | `python3 scripts/plot_structural.py results --tables` |
-| Figure 1, the height gap `H_x - log_b(1 + f_x)` across items | `results/structural_gap.pdf` | `results/structural_items_zipf1.5.csv`, `results/structural_items_uniform.csv` (one row per item at t = F, from `--items=`) | `python3 scripts/plot_structural.py results` (also writes `structural_cost.pdf`, `structural_kl.pdf`, `structural_depth.pdf`, `structural_space.pdf`) |
+| The cost table (total cost over the entropy benchmark and bits per item at n = 10^5) | printed as Markdown | `results/structural_<dist>_n100k.csv` (and `_n10k.csv`, plain `_<dist>.csv` for n = 10^4, 10^3) | `python3 scripts/plot_structural.py results --tables` |
+| The height gap `H_x - log_b(1 + f_x)` across items (drawn, not in the current paper) | `results/structural_gap.pdf` | `results/structural_items_zipf1.5.csv`, `results/structural_items_uniform.csv` (one row per item at t = F, from `--items=`) | `python3 scripts/plot_structural.py results` (also writes `structural_cost.pdf`, `structural_kl.pdf`, `structural_depth.pdf`, `structural_space.pdf`) |
 | The box figure: top, per-search `cost_t / a_t` (Theorem A) at n = 10^3, 10^4, 10^5; bottom, the tail of the per-run deviation over 200 runs (Theorem C) | `results/structural_box.pdf` | `results/structural_hist_*.csv` (whole-run histograms from `--hist=`) and `results/structural_*_R200.csv` (200 runs, final row each) | `python3 scripts/plot_structural_box.py results --dists zipf1.5,uniform --textwidth 4.2` (the paper shows these two distributions; without `--dists` all four are drawn) |
 | The barrier figure, `P[x-block cost / m >= u]` on the sequence of Theorem D | `results/reseed_barrier_tail.pdf` | `results/reseed_barrier_R2000.csv` (R = 2000 runs per n) | `python3 scripts/plot_reseed.py results --only=reseed_barrier_tail.pdf --arms=persistent,reseeded --layout=row --ns=1000` (the paper shows the n = 1000 panel; `--ns=100,1000` draws both) |
 
@@ -78,6 +78,8 @@ harness needs a C++20 compiler and CMake 3.20 or later, nothing else.
 
 The counts are exact and seeded (seed 12345 for `structural`, 20261003 for
 `reseed`), so the CSVs do not depend on the machine. The committed CSVs were
-produced on an Apple M2 laptop with Apple clang 21 at `-O3`; the six
-n = 10^3 and 10^4 commands take about 90 s of CPU in total, the n = 10^5 set
-about an hour, the barrier run about 4 minutes on 8 cores.
+produced on an Apple M2 laptop with Apple clang 21 at `-O3`, and
+`reproduce.sh` regenerated every one of them byte for byte on a second
+platform, Debian 12 with GCC 12.2 on aarch64 in a container (2026-11-01).
+The six n = 10^3 and 10^4 commands take about 90 s of CPU in total, the
+n = 10^5 set about an hour, the barrier run about 4 minutes on 8 cores.
