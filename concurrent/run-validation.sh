@@ -3,7 +3,7 @@
 # after build.sh:
 #
 #   docker run --rm --security-opt seccomp=unconfined \
-#     -v "$PWD/experiments:/work" bsl-setbench /work/setbench/run-validation.sh [quick]
+#     -v "$PWD:/work" bsl-setbench /work/concurrent/run-validation.sh [quick]
 #
 # (seccomp=unconfined is needed only by the ThreadSanitizer runs: TSan calls
 # personality(ADDR_NO_RANDOMIZE), which Docker's default profile blocks.)

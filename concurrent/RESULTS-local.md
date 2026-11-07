@@ -680,3 +680,15 @@ the early miss). The fork's `skiplist_lazy` fails as always and
 `skiplist_locks` lost one insert again (finding 4). One build quirk: over the
 Docker bind mount two rebuilt binaries came back without their execute bit
 (`rc=126`); `build.sh` now restores it.
+
+## Rehearsal of 2026-11-06 (aarch64 container)
+
+The quick campaign (`run-validation.sh quick`, after `build.sh`) was rerun
+from this repository's layout: 94 of 97 runs pass, every run of `bsl_gated`,
+`bsl_classic`, `bsl_exact` and `bsl_morris` among them. The three failures
+are controls on the fork's own skip lists: the two `skiplist_lazy` rows
+(fork finding 2, as in every run) and `A-control-skiplist_locks` on Zipf 1,
+which failed with one or two wrong keys in 6 of 10 repeats of the same
+command. That is fork finding 4, the fork's reliance on x86 ordering: on
+aarch64 `skiplist_locks` races, so its control can fail there, and the
+earlier pass of that row was one draw. On x86 the code is correct.

@@ -16,8 +16,8 @@ out, as the caption says.
 
 Usage: plot_submission.py [--out FILE] [--dists uniform,99-1,zipf1]
                           [results_dir ...]
-Defaults: results/chameleon and results/chameleon-p50 as inputs,
-submission/figures/throughput_gated_classic.pdf as output.
+Defaults: concurrent/results and concurrent/results-p50 as inputs,
+concurrent/results/throughput_gated_classic.pdf as output.
 """
 import argparse
 import os
@@ -29,7 +29,7 @@ from plot_throughput import (AQUA, BLUE, INK, MAGENTA, ORANGE, WIDTH, dist_label
                              find_csvs, read_rows, recessive_grid, setup_matplotlib, warn)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-REPO = os.path.dirname(os.path.dirname(HERE))
+CONCURRENT = os.path.dirname(HERE)
 TEXTWIDTH = 5.5  # inches; the article class with 1 in margins has 6.5 in of text width
 
 # Two series sets. "writes" (the default) tests the counter-free motivation:
@@ -63,9 +63,9 @@ SERIES_P = [
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("paths", nargs="*",
-                    default=[os.path.join(REPO, "experiments", "results", "chameleon"),
-                             os.path.join(REPO, "experiments", "results", "chameleon-p50")])
-    ap.add_argument("--out", default=os.path.join(REPO, "submission", "figures",
+                    default=[os.path.join(CONCURRENT, "results"),
+                             os.path.join(CONCURRENT, "results-p50")])
+    ap.add_argument("--out", default=os.path.join(CONCURRENT, "results",
                                                   "throughput_gated_classic.pdf"))
     ap.add_argument("--dists", default="uniform,99-1,zipf1")
     ap.add_argument("--max-threads", type=int, default=128)

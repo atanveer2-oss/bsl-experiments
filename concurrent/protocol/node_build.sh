@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
-# Node-side half of provision.sh: build the SetBench binaries natively and
-# check them. provision.sh runs this over SSH after rsyncing experiments/;
-# it can also be run by hand on the node, or in the local container.
+# Build the SetBench binaries natively on a measurement node and check them.
+# Run it by hand on the node (or in the container); on Chameleon,
+# concurrent/campaign/provision.sh ran it over SSH.
 #
-#   bash experiments/chameleon/node_build.sh [--install] [--papi]
+#   bash concurrent/protocol/node_build.sh [--install] [--papi]
 #        [--no-harness-patch] [--commit SHA] [--smoke-only]
+#
+# The SetBench fork must be cloned at third_party/splaylist in the
+# repository root (concurrent/README.md gives the commit). The script also
+# runs from the layout the campaign used (experiments/chameleon/ beside
+# experiments/setbench/, see concurrent/campaign/README.md).
 #
 # Steps:
 #   1. (--install) apt packages: build-essential g++ make numactl libnuma-dev
 #      python3 rsync tmux, and libpapi-dev with --papi.
-#   2. setbench/build.sh into $BSL_SETBENCH_WORK (default ~/bsl-build). It
+#   2. concurrent/build.sh into $BSL_SETBENCH_WORK (default ~/bsl-build). It
 #      copies the fork, applies portability.patch (a no-op on x86), adds our
-#      structures from setbench/ds/ and builds. $XARGS (e.g. "-DBSL_K=2")
+#      structures from concurrent/ds/ and builds. $XARGS (e.g. "-DBSL_K=2")
 #      reaches every binary, as in build.sh.
-#   3. Unless --no-harness-patch: apply chameleon/harness.patch to that copy
+#   3. Unless --no-harness-patch: apply concurrent/harness.patch to that copy
 #      and rebuild (threads up to 256, a `seed` argument, the update driver's
 #      Zipf fix; see the patch header).
 #   4. Write BUILD_INFO (commit, patch state, compiler, date), which
@@ -23,7 +28,17 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EXPERIMENTS="$(cd "$HERE/.." && pwd)"
+# SB: the directory holding build.sh, ds/ and harness.patch. In this
+# repository that is concurrent/, the parent of protocol/; in the campaign's
+# layout it was experiments/setbench/, beside experiments/chameleon/.
+if [[ -f "$HERE/../build.sh" ]]; then
+  SB="$(cd "$HERE/.." && pwd)"
+  PATCH="$SB/harness.patch"
+else
+  SB="$(cd "$HERE/../setbench" && pwd)"
+  PATCH="$HERE/harness.patch"
+fi
+FORK="$SB/../third_party/splaylist"   # where build.sh reads the fork
 WORK="${BSL_SETBENCH_WORK:-$HOME/bsl-build}"
 export BSL_SETBENCH_WORK="$WORK"
 
@@ -35,7 +50,7 @@ while [[ $# -gt 0 ]]; do
     --no-harness-patch) harness=0 ;;
     --commit) commit="$2"; shift ;;
     --smoke-only) smoke_only=1 ;;
-    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
     *) echo "node_build.sh: unknown option $1" >&2; exit 2 ;;
   esac
   shift
@@ -54,10 +69,10 @@ fi
 MB="$WORK/structs_bench/microbench"
 if [[ $smoke_only -eq 0 ]]; then
   echo "== building into $WORK"
-  bash "$EXPERIMENTS/setbench/build.sh"
+  bash "$SB/build.sh"
   if [[ $harness -eq 1 ]]; then
-    echo "== applying chameleon/harness.patch and rebuilding"
-    ( cd "$WORK" && patch -p1 --batch --silent < "$HERE/harness.patch" ) \
+    echo "== applying harness.patch and rebuilding"
+    ( cd "$WORK" && patch -p1 --batch --silent < "$PATCH" ) \
       || { echo "node_build.sh: harness.patch failed to apply; the fork or build.sh moved under it" >&2; exit 1; }
     # The Makefile's targets are not file names, so `make all` rebuilds every binary.
     ( cd "$MB" && make -j"$(nproc)" has_libpapi=0 has_libnuma=0 xargs="${XARGS:-}" all >/dev/null )
@@ -72,7 +87,7 @@ if [[ $smoke_only -eq 0 ]]; then
     echo "make_flags=has_libpapi=0 has_libnuma=0"
     echo "xargs=${XARGS:-}"
     # third_party/ is gitignored, so the commit does not pin the fork.
-    echo "fork_digest=$(cd "$EXPERIMENTS/third_party/splaylist" && find structs_bench/ds structs_bench/common structs_bench/microbench -maxdepth 2 -type f \( -name '*.h' -o -name '*.cpp' -o -name Makefile \) -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16)"
+    echo "fork_digest=$(cd "$FORK" && find structs_bench/ds structs_bench/common structs_bench/microbench -maxdepth 2 -type f \( -name '*.h' -o -name '*.cpp' -o -name Makefile \) -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -c1-16)"
   } > "$WORK/BUILD_INFO"
 fi
 

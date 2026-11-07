@@ -1,2 +1,6 @@
 .work/
 third_party/
+# a rerun of the protocol writes here by default
+results-rerun/
+# extracted from driver-logs.tar.gz
+results*/node-*/logs/

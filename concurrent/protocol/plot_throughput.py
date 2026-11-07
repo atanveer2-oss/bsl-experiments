@@ -3,7 +3,7 @@
 
 Reads the CSVs that run_protocol.py writes (throughput_*.csv and
 coldstart_*.csv, searched recursively under each directory argument, so
-results/chameleon/ with one subdirectory per node works as is) and writes
+concurrent/results/ with one subdirectory per node works as is) and writes
 PDFs into the first directory argument, or --out:
 
   throughput_<mix>_k<keys>.pdf  throughput (Mops/s) against threads, one panel
@@ -25,7 +25,7 @@ in data. Points are drawn only where rows exist.
 
 Usage: plot_throughput.py [results_dir_or_csv ...] [--out DIR] [--skip a,b]
 (--skip defaults to the Bronson AVL tree; several directories pool, so
-results/chameleon results/chameleon-p50 draws both p settings as series)
+results results-p50 draws both p settings as series)
 """
 import argparse
 import csv
@@ -361,10 +361,10 @@ def cold_start(plt, rows, out_dir):
 
 def main(argv=None):
     here = os.path.dirname(os.path.abspath(__file__))
-    default = os.path.join(os.path.dirname(here), "results", "chameleon")
+    default = os.path.join(os.path.dirname(here), "results")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("paths", nargs="*", default=[default],
-                    help="result directories or CSV files (default results/chameleon)")
+                    help="result directories or CSV files (default concurrent/results)")
     ap.add_argument("--out", help="output directory (default: the first directory argument)")
     ap.add_argument("--skip", default="bronson_pext_bst_occ",
                     help="comma-separated structures to leave out of every figure "

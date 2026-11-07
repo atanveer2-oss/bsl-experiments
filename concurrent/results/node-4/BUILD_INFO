@@ -1,0 +1,9 @@
+commit=efb69359e347ff353d482a9e435bf445b93e44f3
+harness_patch=1
+built_utc=2026-10-26T15:51:17Z
+host=bsl-throughput-4
+arch=x86_64
+compiler=g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+make_flags=has_libpapi=0 has_libnuma=0
+xargs=-DBSL_P=0.25 -DBSL_K=1
+fork_digest=61950cdba75485bd

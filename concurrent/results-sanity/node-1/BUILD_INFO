@@ -1,0 +1,9 @@
+commit=45516ed1e91f65d1d730418f900f5ace43e2db18
+harness_patch=1
+built_utc=2026-10-25T23:08:20Z
+host=bsl-zen3-sanity-1
+arch=x86_64
+compiler=g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+make_flags=has_libpapi=0 has_libnuma=0
+xargs=
+fork_digest=61950cdba75485bd

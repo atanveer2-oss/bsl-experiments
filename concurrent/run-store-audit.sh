@@ -6,7 +6,7 @@
 # the promotion itself is the out-of-line call to promote(). Run inside the
 # container after build.sh:
 #
-#   docker run --rm -v "$PWD/experiments:/work" bsl-setbench /work/setbench/run-store-audit.sh
+#   docker run --rm -v "$PWD:/work" bsl-setbench /work/concurrent/run-store-audit.sh
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="${BSL_SETBENCH_WORK:-$HERE/.work}"

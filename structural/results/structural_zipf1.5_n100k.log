@@ -1,0 +1,11 @@
+keys=100000 accesses=50000000 dist=zipf1.5 p=0.500 floor=0 c0=1 runs=10 seed=12345 sample_every=5000000
+run 0 done
+run 1 done
+run 2 done
+run 3 done
+run 4 done
+run 5 done
+run 6 done
+run 7 done
+run 8 done
+run 9 done

@@ -5,8 +5,8 @@
 # numbers that go in the paper (it is what the competing papers measured on);
 # aarch64 is for developing and validating the harness locally on Apple silicon.
 #
-#   docker build -t bsl-setbench experiments/setbench
-#   docker run --rm -v "$PWD/experiments:/work" bsl-setbench /work/setbench/build.sh
+#   docker build -t bsl-setbench concurrent        (from the repository root)
+#   docker run --rm -v "$PWD:/work" bsl-setbench /work/concurrent/build.sh
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \

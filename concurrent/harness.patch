@@ -1,5 +1,5 @@
-Harness patch for the SetBench microbenchmarks, applied by chameleon/provision.sh
-to the build COPY after setbench/build.sh has applied portability.patch. Never
+Harness patch for the SetBench microbenchmarks, applied by protocol/node_build.sh
+to the build COPY after build.sh has applied portability.patch. Never
 applied to the vendored tree. No change touches algorithm code.
 
   1. Threads above 99. benchmark.cpp and benchmark_write.cpp size their

@@ -4,7 +4,7 @@
 # 90/10 and Zipf 1, threads 1 2 4 6, 3 repetitions. Run inside the
 # container after build.sh:
 #
-#   docker run --rm -v "$PWD/experiments:/work" bsl-setbench /work/setbench/run-smoke.sh
+#   docker run --rm -v "$PWD:/work" bsl-setbench /work/concurrent/run-smoke.sh
 #
 # Writes $WORK/logs/smoke.csv (one row per run) and $WORK/logs/smoke.log
 # (every command line and its full output). The fork's benchmark.cpp prints

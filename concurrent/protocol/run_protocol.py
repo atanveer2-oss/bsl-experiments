@@ -9,12 +9,12 @@ row already present.
 Two modes:
 
   default       throughput and path length against threads. One row per run,
-                written to results/chameleon/throughput_<site>_<date>.csv.
+                written to <results>/throughput_<site>_<date>.csv.
   --cold-start  throughput as a function of elapsed time from a fresh prefill.
                 The fork has no throughput-over-time output, so each point is
                 its own process: window [a, b] runs `presecs a secs (b - a)`
                 from a fresh prefill and reports the ops completed in that
-                window. Rows go to results/chameleon/coldstart_<site>_<date>.csv.
+                window. Rows go to <results>/coldstart_<site>_<date>.csv.
 
 How the benchmark is driven (all read from microbench/benchmark.cpp and
 benchmark_write.cpp, the fork's own drivers, not from memory):
@@ -34,7 +34,12 @@ benchmark_write.cpp, the fork's own drivers, not from memory):
     memory is interleaved with `numactl --interleave=all` and jemalloc is
     preloaded, exactly as the authors' count_stats_zipf.sh does.
 
-Standard library only. See chameleon/README.md for the full procedure.
+<results> is --results, by default concurrent/results-rerun/ in this
+repository (concurrent/results/ holds the committed rows, so a rerun does
+not write beside them), and experiments/results/chameleon/ in the layout the
+campaign ran from (concurrent/campaign/README.md).
+
+Standard library only. See concurrent/README.md and protocol/PROTOCOL.md.
 """
 import argparse
 import csv
@@ -50,9 +55,17 @@ import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-EXPERIMENTS = os.path.dirname(HERE)
+# SB: the directory holding build.sh and ds/. In this repository that is
+# concurrent/, the parent of protocol/; in the campaign's layout it was
+# experiments/setbench/, beside experiments/chameleon/.
+if os.path.isfile(os.path.join(HERE, "..", "build.sh")):
+    SB = os.path.dirname(HERE)
+    DEFAULT_RESULTS = os.path.join(SB, "results-rerun")
+else:
+    SB = os.path.join(os.path.dirname(HERE), "setbench")
+    DEFAULT_RESULTS = os.path.join(os.path.dirname(HERE), "results", "chameleon")
 
-# Ours (experiments/setbench/ds/, copied into the build by setbench/build.sh),
+# Ours (ds/ under SB, copied into the build by build.sh),
 # its control arm on the same code, and the six baselines (ds/ names).
 # bsl_exact and bsl_morris join with --structures when they exist.
 DEFAULT_STRUCTURES = [
@@ -226,7 +239,7 @@ def cops_value(expr, threads):
 # ---------------------------------------------------------------------------
 
 def read_build_info(work):
-    """BUILD_INFO written by provision.sh into the build directory."""
+    """BUILD_INFO written by node_build.sh into the build directory."""
     info = {}
     path = os.path.join(work, "BUILD_INFO")
     if os.path.exists(path):
@@ -240,9 +253,9 @@ def read_build_info(work):
 
 def local_commit():
     try:
-        sha = subprocess.run(["git", "-C", EXPERIMENTS, "rev-parse", "HEAD"],
+        sha = subprocess.run(["git", "-C", os.path.dirname(HERE), "rev-parse", "HEAD"],
                              capture_output=True, text=True, check=True).stdout.strip()
-        dirty = subprocess.run(["git", "-C", EXPERIMENTS, "status", "--porcelain", "--", "."],
+        dirty = subprocess.run(["git", "-C", os.path.dirname(HERE), "status", "--porcelain", "--", "."],
                                capture_output=True, text=True, check=True).stdout.strip()
         return sha + ("-dirty" if dirty else "")
     except (OSError, subprocess.CalledProcessError):
@@ -357,8 +370,8 @@ def bsl_params(work, xargs, structure):
     vals = {}
     for cand in (os.path.join(work, "structs_bench", "ds", structure, "bsl_skiplist.h"),
                  os.path.join(work, "structs_bench", "ds", "bsl_gated", "bsl_skiplist.h"),
-                 os.path.join(EXPERIMENTS, "setbench", "ds", structure, "bsl_skiplist.h"),
-                 os.path.join(EXPERIMENTS, "setbench", "ds", "bsl_gated", "bsl_skiplist.h")):
+                 os.path.join(SB, "ds", structure, "bsl_skiplist.h"),
+                 os.path.join(SB, "ds", "bsl_gated", "bsl_skiplist.h")):
         if os.path.exists(cand):
             with open(cand) as fh:
                 for m in re.finditer(r"#define\s+BSL_(P|K)\s+(\S+)", fh.read()):
@@ -385,7 +398,7 @@ def build_plan(args, max_threads, seeded, struct_defaults=None):
     dropped = [t for t in threads if t > max_threads]
     if dropped:
         warn(f"dropping thread counts {dropped}: this build supports at most "
-             f"{max_threads} (apply chameleon/harness.patch, see README)")
+             f"{max_threads} (apply harness.patch with node_build.sh)")
     threads = [t for t in threads if t <= max_threads]
     windows = list(zip(args.windows, args.windows[1:])) if cold else [None]
 
@@ -622,9 +635,9 @@ def add_arguments(ap):
     e.add_argument("--site", default=os.environ.get("CHAMELEON_SITE", "tacc"))
     e.add_argument("--work", default=os.environ.get("BSL_SETBENCH_WORK",
                                                      os.path.expanduser("~/bsl-build")),
-                   help="build directory from provision.sh (default $BSL_SETBENCH_WORK "
+                   help="build directory from node_build.sh (default $BSL_SETBENCH_WORK "
                         "or ~/bsl-build)")
-    e.add_argument("--results", default=os.path.join(EXPERIMENTS, "results", "chameleon"))
+    e.add_argument("--results", default=DEFAULT_RESULTS)
     e.add_argument("--out", help="CSV path (default: the newest "
                                  "<mode>_<site>_*.csv in --results, else a new dated one)")
     e.add_argument("--new", action="store_true", help="start a new dated CSV")
@@ -686,7 +699,7 @@ def execute(args):
     if missing:
         msg = f"{len(missing)} binaries missing from {bin_dir}: {', '.join(missing)}"
         if not args.skip_missing:
-            raise SystemExit(f"run_protocol: {msg} (rerun provision.sh, or --skip-missing)")
+            raise SystemExit(f"run_protocol: {msg} (rerun node_build.sh, or --skip-missing)")
         warn(msg + "; skipping them")
         todo = [r for r in todo if r.binary not in missing]
     if args.allocator == "jemalloc" and not jemalloc_ok(jemalloc):

@@ -15,7 +15,9 @@ the tail of the cost of the persistent process against epochal reseeding.
 Aksenov's SetBench fork (the repository that carries the splay-list and the
 CBTree), the correctness campaign that checked it, the protocol under which
 throughput and search path length were measured on four dual-socket AMD
-EPYC 7763 nodes of Chameleon Cloud, and every row those runs produced.
+EPYC 7763 nodes of Chameleon Cloud, every row those runs produced, and
+the scripts, logs and per-run driver output of the campaign that ran them
+(`concurrent/campaign/`).
 Throughput is not reproducible bit for bit; the path-length column is
 seeded and exact. The fork itself is not vendored: `concurrent/README.md`
 gives the commit to clone.
@@ -75,5 +77,20 @@ correctness. The committed throughput rows cannot be reproduced bit for bit
 anywhere; the figures and table are redrawn from them exactly, the protocol
 can be rerun on other hardware with `protocol/run_protocol.py`, and the
 correctness campaign (`run-validation.sh`) reruns in the container.
+
+## Changes after the commit the paper cites
+
+The paper cites commit `6d7c430`. In that commit the node-side build,
+`concurrent/protocol/node_build.sh`, still looked for `build.sh` and
+`harness.patch` where they sat in the working tree the campaign ran from,
+so rerunning the throughput protocol stopped at the build step. The
+commits after it (`git log 6d7c430..`) fix those paths and the default
+folders of the runner and the plot scripts, say in `concurrent/README.md`
+how to rerun the protocol, and add the campaign's scripts and records.
+Nothing measured changed: the CSVs, figures and tables of `6d7c430`,
+all of `structural/` apart from added run logs, and `concurrent/ds/` are
+unchanged; the records add the sanity run's rows (`concurrent/results-sanity/`). `git checkout 6d7c430` gives the cited version.
+
+## Licence
 
 MIT licence, 2026, Adil Tanveer (Illinois Institute of Technology). See `LICENSE`.

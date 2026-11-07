@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Print the submission's throughput table (LaTeX rows) from the Chameleon CSVs.
 
-Usage: throughput_table.py [results_dir ...]   (default: results/chameleon
-and results/chameleon-p50 next to this script's repository root)
+Usage: throughput_table.py [results_dir ...]   (default: concurrent/results
+and concurrent/results-p50)
 
 Rows: the rule at p = 1/4, K = 1, the Morris and exact estimators and the
 classic skip list (one implementation), the splay-list and the CBTree.
@@ -28,8 +28,8 @@ THREADS = [64, 256]
 
 
 def main(argv):
-    dirs = argv or [os.path.join(ROOT, "results", "chameleon"),
-                    os.path.join(ROOT, "results", "chameleon-p50")]
+    dirs = argv or [os.path.join(ROOT, "results"),
+                    os.path.join(ROOT, "results-p50")]
     rows = [r for d in dirs for f in glob.glob(os.path.join(d, "*", "throughput_tacc_*.csv"))
             for r in csv.DictReader(open(f))]
     thr, path = {}, {}

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Summarise the collected Chameleon rows as one JSON document for the dashboard's
-Results tab (artifact db doc results/latest).
+"""Summarise the collected Chameleon rows as one JSON document (used during the
+campaign to follow the results as they arrived).
 
-    python3 results_json.py experiments/results/chameleon > results.json
+    python3 results_json.py concurrent/results > results.json
 
 For every (mix, key range, distribution): the thread counts seen, and per structure
 the median throughput (Mops/s), median path length and repetition count at each
