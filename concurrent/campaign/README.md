@@ -47,7 +47,7 @@ hardware threads); a *floating IP* is the public address of a node.
    | 1/4, 1 | 22.2 | 106.3 | 31.0 | 98.0 | 49.7 |
    | 1/4, 3 | 24.7 | 99.3 | 31.9 | 94.5 | 50.3 |
    | 1/2, 1 | 25.3 | 108.8 | 32.2 | 99.8 | 49.3 |
-   | 1/2, 2 | 28.1 | 107.0 | 32.5 | 98.9 | 48.6 |
+   | 1/2, 2 | 28.0 | 107.0 | 32.5 | 98.9 | 48.6 |
    | 1/2, 3 | 25.8 | 104.7 | 32.3 | 97.2 | 48.1 |
 
    Our rule, read-only, 64 threads, 10^6 keys, median of 2 repetitions.
@@ -81,6 +81,15 @@ tar -xzf driver-logs.tar.gz
 
 and each node directory gains a `logs/` folder, so a row's `log` value
 resolves from its own directory. The unpacked folders are gitignored.
+
+One exception, in the sanity run: its five builds of `bsl_gated` (one per
+(p, K) setting) ran under the same structure name, and the log file names
+do not include p or K, so each build overwrote the previous build's logs.
+There, 300 rows share 60 log names, and only the last build's output
+survives; the other 240 rows' `log` value points at another build's
+output. Their CSV rows are complete (the runner parsed each run's output
+before the next overwrote it). The main sweep and the p = 1/2 rerun have
+one build per structure, and every log name in them is unique.
 
 ## Running the scripts
 
