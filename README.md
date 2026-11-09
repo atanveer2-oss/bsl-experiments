@@ -22,6 +22,11 @@ Throughput is not reproducible bit for bit; the path-length column is
 seeded and exact. The fork itself is not vendored: `concurrent/README.md`
 gives the commit to clone.
 
+This branch also carries a configuration for Claude Code, the coding
+agent used to build and run these experiments: `CLAUDE.md` and `.claude/`
+(settings, hooks, subagents, skills, commands), explained in
+`docs/HARNESS.md`.
+
 ## Reproduce in one command
 
 ```

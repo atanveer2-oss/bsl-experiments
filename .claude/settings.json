@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(cmake *)",
+      "Bash(ctest *)",
+      "Bash(./reproduce.sh)",
+      "Bash(./reproduce.sh *)",
+      "Bash(QUICK=1 ./reproduce.sh)",
+      "Bash(QUICK=1 ./reproduce.sh *)",
+      "Bash(./structural/build/structural *)",
+      "Bash(python3 structural/scripts/*)",
+      "Bash(python3 concurrent/protocol/*)",
+      "Bash(cmp *)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(docker build *)"
+    ],
+    "ask": [
+      "Bash(docker run *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(./reserve.sh *)",
+      "Bash(./provision.sh *)",
+      "Bash(./start_runs.sh *)",
+      "Bash(crontab *)"
+    ],
+    "deny": [
+      "Read(~/.config/chameleon/**)",
+      "Read(~/.ssh/**)",
+      "Edit(./structural/results/**)",
+      "Edit(./concurrent/results/**)",
+      "Edit(./concurrent/results-p50/**)",
+      "Edit(./concurrent/results-sanity/**)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/session_context.py", "timeout": 20 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/protect_results.py", "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/block_secrets.py", "timeout": 10 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "\"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/build_and_test.py", "timeout": 600 }
+        ]
+      }
+    ]
+  }
+}

@@ -2,3 +2,5 @@ build/
 rerun/
 __pycache__/
 .DS_Store
+# output of new experiments, kept until the user asks to commit it
+scratch/
